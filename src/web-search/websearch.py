@@ -53,16 +53,10 @@ class Index(object):
         Index.data_path = data_path
 
     @staticmethod
-    def get_links_by_words(words):
+    def get_links_by_query(query):
         links = {}
-        for word in words:
-            word = stemmer.stem(word)
-
-            print('{}'.format(word))
-
+        for word in Index.simplify_query(query):
             data = Index.index.get(word, {})
-
-            print(data, len(Index.index))
 
             for link in data:
                 if link not in links:
@@ -72,12 +66,31 @@ class Index(object):
         return sorted(links, key=lambda x: links[x], reverse=True)
 
     @staticmethod
-    def info_by_link(link):
+    def simplify_query(query):
+        bag_of_words = [x.strip() for x in query.split(' ') if x.strip()]
+        return [stemmer.stem(x) for x in bag_of_words]
+
+    @staticmethod
+    def info_by_link(link, query):
         hash_name = hashlib.md5(link.encode('utf-8')).hexdigest()
         with open(os.path.join(Index.data_path, '{}.json'.format(hash_name))) as rfile:
             data = json.load(rfile)
 
-        return str(data['title']), str(data['url'])
+        snippet = []
+        last_seq = ''
+
+        for seq in data['text'].split('. '):
+            count = 0
+
+            for word in Index.simplify_query(query):
+                if word in seq:
+                    count += 1
+            snippet.extend([(last_seq, count), (seq, count)])
+
+        snippet = sorted(snippet, key=lambda x: x[1], reverse=True)
+        text_snippet = '. '.join([x[0] for x in snippet[:2]])
+
+        return str(data['title']), str(data['url']), text_snippet
 
 
 @APP.route('/')
@@ -88,13 +101,14 @@ def morda():
 @APP.route('/search')
 def search():
     q = flask.request.args.get('q', '').strip()
-    links = Index.get_links_by_words(q.split(' '))
+    links = Index.get_links_by_query(q)
     prepared = []
     for link in links:
-        title, url = Index.info_by_link(link)
+        title, url, snippet = Index.info_by_link(link, q)
         prepared.append({
             'title': title,
-            'url': url
+            'url': url,
+            'snippet': snippet
         })
     return flask.render_template('search.html', links=prepared, query=q)
 

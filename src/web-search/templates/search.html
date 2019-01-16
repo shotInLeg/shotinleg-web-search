@@ -16,10 +16,10 @@
             <form method="GET" action="/search">
                 <div class="row">
                     <div class="col">
-                        <input name="q" class="form-control" type="text" placeholder="Enter yourt request here..." value="{{ query }}" />
+                        <input name="q" class="form-control" type="text" placeholder="Поиск, например, Баранов Вячеслав Викторович" value="{{ query }}" />
                     </div>
-                    <div class="col-md-3">
-                        <input class="form-control" type="submit" />
+                    <div class="col-md-2">
+                        <input class="form-control" type="submit" value="Найти" />
                     </div>
                 </div>
             </form>
@@ -29,7 +29,9 @@
             <ul class="list-group">
                 {% for link in links %}
                     <li class="list-group-item">
-                        <a href="{{ link['url'] }}" target="_blank">{{ link['title'] }}</a>
+                        <a href="{{ link['url'] }}" target="_blank">{{ link['title'] }}</a></ br>
+                        <p style="font-size: 6pt">{{ link['url'] }}</p></ br>
+                        <p style="font-size: 9pt">{{ link['snippet'] }}</p>
                     </li>
                 {% endfor %}
             </ul>

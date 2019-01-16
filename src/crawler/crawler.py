@@ -42,7 +42,7 @@ def arg_parser():
 
 def parse_html_page(html):
     def tag_visible(element):
-        if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+        if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]', 'a']:
             return False
         if isinstance(element, Comment):
             return False
@@ -50,9 +50,9 @@ def parse_html_page(html):
 
     soup = BeautifulSoup(html, 'html.parser')
     title = soup.title.text if soup.title else ''
-    headers = [x.text for x in (soup.find('h1') or [])]
-    headers.extend([x.text for x in (soup.find('h2') or [])])
-    headers.extend([x.text for x in (soup.find('h3') or [])])
+    headers = [h.text for h in soup.findAll('h1')]
+    headers.extend([h.text for h in soup.findAll('h2')])
+    headers.extend([h.text for h in soup.findAll('h3')])
 
     texts = soup.findAll(text=True)
     visible_texts = filter(tag_visible, texts)

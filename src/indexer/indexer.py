@@ -41,6 +41,13 @@ def count_words(words):
     return words_count
 
 
+def update_index(words_count, index, k):
+    for word, count in words_count.items():
+        if word not in index:
+            index[word] = {}
+        index[word][url] = count * k
+
+
 def indexer(downloaded_path, output_path):
     with open(downloaded_path, 'r') as rfile:
         downloaded = json.load(rfile)
@@ -51,23 +58,22 @@ def indexer(downloaded_path, output_path):
             page = json.load(rfile)
             words = bag_of_words(page['text'])
             words = steming(words)
+
             header_words = []
             for header in page['headers']:
                 header_words.extend(bag_of_words(header))
             header_words = steming(header_words)
 
+            title_words = bag_of_words(page['title'])
+            title_words = steming(title_words)
+
             words_count = count_words(words)
             header_words_count = count_words(header_words)
+            title_words_count = count_words(title_words)
 
-            for word, count in words_count.items():
-                if word not in index:
-                    index[word] = {}
-                index[word][url] = count
-
-            for word, count in header_words.items():
-                if word not in index:
-                    index[word] = {}
-                index[word][url] = count * 100
+            update_index(words_count, index, 1)
+            update_index(header_words_count, index, 100)
+            update_index(title_words_count, index, 100)
 
     if output_path is not None:
         with open(os.path.join(output_path, 'index.json'), 'w') as wfile:
