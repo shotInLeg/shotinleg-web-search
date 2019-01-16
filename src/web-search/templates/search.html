@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    {% include 'templates_head.html' %}
+    <title>shotinleg@ Web Search</title>
+</head>
+<body>
+    <div class="container">
+        <div class="" style="text-align: center; margin-top: 200px;">
+            <a class="navbar-brand" href="/">
+                <img src="/static/icons/shotInLeg_splash_crcl.png" height="100px" /></ br>
+            </a>
+        </div>
+        
+        <div class="" style="text-align: center; margin-top: 100px; width: 100%;">
+            <form method="GET" action="/search">
+                <div class="row">
+                    <div class="col">
+                        <input name="q" class="form-control" type="text" placeholder="Enter yourt request here..." value="{{ query }}" />
+                    </div>
+                    <div class="col-md-3">
+                        <input class="form-control" type="submit" />
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="" style="text-align: left; margin-top: 50px; width: 100%;">
+            <ul class="list-group">
+                {% for link in links %}
+                    <li class="list-group-item">
+                        <a href="{{ link['url'] }}" target="_blank">{{ link['title'] }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    {% include 'templates_body_footer.html' %}
+</body>
+</html>

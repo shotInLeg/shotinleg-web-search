@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    {% include 'templates_head.html' %}
+    <title>File Manager</title>
+</head>
+<body>
+    {% include 'templates_navbar.html' %}
+
+    <div class="container">
+        <ul class="list-group">
+            {% for item in structure %}
+                <li class="list-group-item">
+                    {% if item['mimetype'] %}
+                        <a href="/files{{ item['fullpath'] }}">
+                            <img src="/static/icons/file-50.png" height="20" />
+                            {{ item['name'] }}
+                        </a>
+                    {% else %}
+                        <a href="/files{{ item['fullpath'] }}">
+                            <img src="/static/icons/folder-50.png" height="20" />
+                            {{ item['name'] }}
+                        </a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% include 'templates_body_footer.html' %}
+</body>
+</html>
