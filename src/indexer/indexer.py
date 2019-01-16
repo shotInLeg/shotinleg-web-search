@@ -74,7 +74,7 @@ def indexer(downloaded_path, output_path):
 
         update_index(words_count, index, url, 1)
         update_index(header_words_count, index, url, 100)
-        update_index(title_words_count, index, url, 100)
+        update_index(title_words_count, index, url, 200)
 
     if output_path is not None:
         with open(os.path.join(output_path, 'index.json'), 'w') as wfile:
