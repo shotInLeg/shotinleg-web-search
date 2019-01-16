@@ -42,7 +42,7 @@ def arg_parser():
 
 def parse_html_page(html):
     def tag_visible(element):
-        if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]', 'a']:
+        if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
             return False
         if isinstance(element, Comment):
             return False
@@ -111,7 +111,7 @@ def crawler(urls, output_path, visited_urls=None, downloaded=None, depth=None):
 
         title, headers, text, links = parse_html_page(html)
         links = normilize_links(links, url, only_current_doman=True)
-        next_step_links |= filter(lambda x: x not in visited_urls, links)
+        next_step_links |= {x for x in links if x not in visited_urls}
 
         filename = hashlib.md5(url.encode('utf-8')).hexdigest()
         with open(os.path.join(output_path, '{}.json'.format(filename)), 'w') as wfile:

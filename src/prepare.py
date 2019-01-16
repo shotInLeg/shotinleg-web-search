@@ -8,7 +8,7 @@ import indexer
 
 
 def main(args):
-    crawler.crawler(['http://stankin.ru/'], os.path.join(os.getcwd(), 'data'), depth=2)
+    # crawler.crawler(['http://stankin.ru/'], os.path.join(os.getcwd(), 'data'), depth=2)
     indexer.indexer(os.path.join(os.getcwd(), 'data', 'downloaded.json'), os.path.join(os.getcwd(), 'data'))
     return 0
 

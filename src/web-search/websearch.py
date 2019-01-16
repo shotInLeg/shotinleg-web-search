@@ -10,12 +10,12 @@ import multiprocessing
 import flask
 
 from flask import Flask
-from nltk.stem.cistem import Cistem
+from nltk.stem.snowball import SnowballStemmer
 
 
 
 APP = Flask(__name__)
-stemmer = Cistem()
+stemmer = SnowballStemmer('russian')
 
 
 def arg_parser():

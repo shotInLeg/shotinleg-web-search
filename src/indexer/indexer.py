@@ -6,10 +6,10 @@ import json
 import argparse
 import collections
 
-from nltk.stem.cistem import Cistem
+from nltk.stem.snowball import SnowballStemmer
 
 
-stemmer = Cistem()
+stemmer = SnowballStemmer('russian')
 
 
 def arg_parser():
@@ -56,24 +56,25 @@ def indexer(downloaded_path, output_path):
     for url, data in downloaded.items():
         with open(data['path']) as rfile:
             page = json.load(rfile)
-            words = bag_of_words(page['text'])
-            words = steming(words)
 
-            header_words = []
-            for header in page['headers']:
-                header_words.extend(bag_of_words(header))
-            header_words = steming(header_words)
+        words = bag_of_words(page['text'])
+        words = steming(words)
 
-            title_words = bag_of_words(page['title'])
-            title_words = steming(title_words)
+        header_words = []
+        for header in page['headers']:
+            header_words.extend(bag_of_words(header))
+        header_words = steming(header_words)
 
-            words_count = count_words(words)
-            header_words_count = count_words(header_words)
-            title_words_count = count_words(title_words)
+        title_words = bag_of_words(page['title'])
+        title_words = steming(title_words)
 
-            update_index(words_count, index, url, 1)
-            update_index(header_words_count, index, url, 100)
-            update_index(title_words_count, index, url, 100)
+        words_count = count_words(words)
+        header_words_count = count_words(header_words)
+        title_words_count = count_words(title_words)
+
+        update_index(words_count, index, url, 1)
+        update_index(header_words_count, index, url, 100)
+        update_index(title_words_count, index, url, 100)
 
     if output_path is not None:
         with open(os.path.join(output_path, 'index.json'), 'w') as wfile:
