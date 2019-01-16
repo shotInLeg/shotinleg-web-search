@@ -41,7 +41,7 @@ def count_words(words):
     return words_count
 
 
-def update_index(words_count, index, k):
+def update_index(words_count, index, url, k):
     for word, count in words_count.items():
         if word not in index:
             index[word] = {}
@@ -71,9 +71,9 @@ def indexer(downloaded_path, output_path):
             header_words_count = count_words(header_words)
             title_words_count = count_words(title_words)
 
-            update_index(words_count, index, 1)
-            update_index(header_words_count, index, 100)
-            update_index(title_words_count, index, 100)
+            update_index(words_count, index, url, 1)
+            update_index(header_words_count, index, url, 100)
+            update_index(title_words_count, index, url, 100)
 
     if output_path is not None:
         with open(os.path.join(output_path, 'index.json'), 'w') as wfile:

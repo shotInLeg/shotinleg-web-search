@@ -50,9 +50,9 @@ def parse_html_page(html):
 
     soup = BeautifulSoup(html, 'html.parser')
     title = soup.title.text if soup.title else ''
-    headers = [h.text for h in soup.findAll('h1')]
-    headers.extend([h.text for h in soup.findAll('h2')])
-    headers.extend([h.text for h in soup.findAll('h3')])
+    headers = [h.text.strip() for h in soup.findAll('h1') if h.text.strip()]
+    headers.extend([h.text.strip() for h in soup.findAll('h2') if h.text.strip()])
+    headers.extend([h.text.strip() for h in soup.findAll('h3') if h.text.strip()])
 
     texts = soup.findAll(text=True)
     visible_texts = filter(tag_visible, texts)
@@ -96,12 +96,13 @@ def crawler(urls, output_path, visited_urls=None, downloaded=None, depth=None):
 
     visited_urls = visited_urls or set()
     downloaded = downloaded or {}
-    delay = 2  # TODO: Add robots.txt
+    delay = 3  # TODO: Add robots.txt
 
     next_step_links = set()
     for url in urls:
         if url in visited_urls:
             continue
+
         try:
             html = network.get_html_page(url, retry=True)
         except Exception as e:
@@ -110,7 +111,7 @@ def crawler(urls, output_path, visited_urls=None, downloaded=None, depth=None):
 
         title, headers, text, links = parse_html_page(html)
         links = normilize_links(links, url, only_current_doman=True)
-        next_step_links |= links
+        next_step_links |= filter(lambda x: x not in visited_urls, links)
 
         filename = hashlib.md5(url.encode('utf-8')).hexdigest()
         with open(os.path.join(output_path, '{}.json'.format(filename)), 'w') as wfile:

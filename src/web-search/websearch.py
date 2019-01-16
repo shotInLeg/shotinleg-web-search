@@ -85,7 +85,12 @@ class Index(object):
             for word in Index.simplify_query(query):
                 if word in seq:
                     count += 1
-            snippet.extend([(last_seq, count), (seq, count)])
+
+            if last_seq:
+                snippet.append((last_seq, count))
+            snippet.append((seq, count))
+
+            last_seq = seq
 
         snippet = sorted(snippet, key=lambda x: x[1], reverse=True)
         text_snippet = '. '.join([x[0] for x in snippet[:2]])
