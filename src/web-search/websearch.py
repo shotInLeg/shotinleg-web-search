@@ -10,35 +10,12 @@ import multiprocessing
 import flask
 
 from flask import Flask
+from bs4.element import Comment
 from nltk.stem.snowball import SnowballStemmer
-
 
 
 APP = Flask(__name__)
 stemmer = SnowballStemmer('russian')
-
-
-def arg_parser():
-    def list_comma_str(values):
-        return [x.strip() for x in values.split(',') if x.strip()]
-
-    parser = argparse.ArgumentParser(
-        description='shotinleg-web-search: simple gui for web seacrh.'
-    )
-    parser.add_argument(
-        '--port',
-        type=int,
-        default=80,
-        help='Port for start.'
-    )
-    parser.add_argument(
-        '--data-path',
-        type=str,
-        default='../data',
-        help='Path to data.'
-    )
-
-    return  parser.parse_args()
 
 
 class Index(object):
@@ -71,31 +48,47 @@ class Index(object):
         return [stemmer.stem(x) for x in bag_of_words]
 
     @staticmethod
+    def text_from_tags(html, skip_tags):
+        def tag_visible(element):
+            if element.parent.name in skip_tags:
+                return False
+            if isinstance(element, Comment):
+                return False
+            return True
+
+        soup = BeautifulSoup(html, 'html.parser')
+        texts = soup.findAll(text=True)
+        visible_texts = filter(tag_visible, texts)
+        text = " ".join(t.strip() for t in visible_texts)
+
+        return text
+
+    @staticmethod
+    def snippet_by_html(html, query):
+        text_from_page = Index.text_from_tags(html, ['style', 'script', 'head', 'title', 'meta', '[document]', 'a', 'button'])
+
+        snippet = []
+        for seq in text_from_page.split('. '):
+            if not seq:
+                continue
+
+            count = 0
+            for word in Index.simplify_query(query):
+                if word in Index.simplify_query(seq):
+                    count += 1
+            snippets.append((seq, count))
+        snippets = [x[0] for x in sorted(snippets, key=lambda x: x[1], reverse=True)]
+
+        return '. '.format(snippets[:2])
+
+    @staticmethod
     def info_by_link(link, query):
         hash_name = hashlib.md5(link.encode('utf-8')).hexdigest()
         with open(os.path.join(Index.data_path, '{}.json'.format(hash_name))) as rfile:
             data = json.load(rfile)
+        snippet = Index.snippets.append(data['html'], query)
 
-        snippet = []
-        last_seq = ''
-
-        for seq in data['text'].split('. '):
-            count = 0
-
-            for word in Index.simplify_query(query):
-                if word in seq:
-                    count += 1
-
-            if last_seq:
-                snippet.append((last_seq, count))
-            snippet.append((seq, count))
-
-            last_seq = seq
-
-        snippet = sorted(snippet, key=lambda x: x[1], reverse=True)
-        text_snippet = '. '.join([x[0] for x in snippet[:2]])
-
-        return str(data['title']), str(data['url']), text_snippet
+        return str(data['title']), str(data['url']), snippet
 
 
 @APP.route('/')
@@ -122,6 +115,28 @@ def websearch(port, data_path):
     Index.load(data_path, 'index.json')
     APP.run(host='::', port=port, debug=True)
 
+
+def arg_parser():
+    def list_comma_str(values):
+        return [x.strip() for x in values.split(',') if x.strip()]
+
+    parser = argparse.ArgumentParser(
+        description='shotinleg-web-search: simple gui for web seacrh.'
+    )
+    parser.add_argument(
+        '--port',
+        type=int,
+        default=80,
+        help='Port for start.'
+    )
+    parser.add_argument(
+        '--data-path',
+        type=str,
+        default='../data',
+        help='Path to data.'
+    )
+
+    return  parser.parse_args()
 
 
 def main(port, data_path):

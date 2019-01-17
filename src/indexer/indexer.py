@@ -6,24 +6,36 @@ import json
 import argparse
 import collections
 
+from bs4.element import Comment
 from nltk.stem.snowball import SnowballStemmer
 
 
 stemmer = SnowballStemmer('russian')
 
 
-def arg_parser():
-    parser = argparse.ArgumentParser(
-        description='shotinleg-indexer: simple indexer for html pages.'
-    )
-    parser.add_argument(
-        '--downloaded-path',
-        type=str,
-        required=True,
-        help='Path of downloaded.json'
-    )
+def parse_html_page(html):
+    def tag_visible(element):
+        if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+            return False
+        if isinstance(element, Comment):
+            return False
+        return True
 
-    return  parser.parse_args()
+    soup = BeautifulSoup(html, 'html.parser')
+    title = soup.title.text if soup.title else ''
+    headers = [h.text.strip() for h in soup.findAll('h1') if h.text.strip()]
+    headers.extend([h.text.strip() for h in soup.findAll('h2') if h.text.strip()])
+    headers.extend([h.text.strip() for h in soup.findAll('h3') if h.text.strip()])
+
+    texts = soup.findAll(text=True)
+    visible_texts = filter(tag_visible, texts)
+    text = " ".join(t.strip() for t in visible_texts)
+
+    links = set()
+    for i in soup.find_all('a', href=True):
+        links.add(i['href'])
+
+    return title, headers, text, links
 
 
 def bag_of_words(text):
@@ -57,7 +69,8 @@ def indexer(downloaded_path, output_path):
         with open(data['path']) as rfile:
             page = json.load(rfile)
 
-        words = bag_of_words(page['text'])
+        text = parse_html_page(page['html'])
+        words = bag_of_words(text)
         words = steming(words)
 
         header_words = []
@@ -81,6 +94,20 @@ def indexer(downloaded_path, output_path):
             wfile.write(json.dumps(index, indent=4))
 
     return index
+
+
+def arg_parser():
+    parser = argparse.ArgumentParser(
+        description='shotinleg-indexer: simple indexer for html pages.'
+    )
+    parser.add_argument(
+        '--downloaded-path',
+        type=str,
+        required=True,
+        help='Path of downloaded.json'
+    )
+
+    return  parser.parse_args()
 
 
 def main(downloaded_path):
