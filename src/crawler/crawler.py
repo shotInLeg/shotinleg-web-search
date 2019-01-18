@@ -7,6 +7,7 @@ import json
 import time
 import hashlib
 import argparse
+import datetime
 
 import lib.network as network
 
@@ -66,7 +67,7 @@ def crawler(urls, output_path, visited_urls=None, downloaded=None, depth=None):
     delay = 6  # TODO: Add robots.txt
 
     next_step_links = set()
-    for url in urls:
+    for i, url in enumerate(urls):
         if url in visited_urls:
             continue
 
@@ -97,10 +98,14 @@ def crawler(urls, output_path, visited_urls=None, downloaded=None, depth=None):
         }
 
         visited_urls.add(url)
+        print('[{}] Sleep {}s ({}/{})'.format(datetime.datetime.now().strftime("%H:%M:%S"), delay, i, len(urls)))
         time.sleep(delay)
 
     with open(os.path.join(output_path, 'downloaded.json'), 'w') as wfile:
         wfile.write(json.dumps(downloaded, indent=4))
+
+    print('[{}] Sleep 10s (depth: {})'.format(datetime.datetime.now().strftime("%H:%M:%S"), depth))
+    time.sleep(10)
 
     if next_step_links:
         crawler(next_step_links, output_path, visited_urls, downloaded, depth)

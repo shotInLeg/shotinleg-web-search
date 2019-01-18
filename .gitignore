@@ -1,5 +1,7 @@
 # Paths
 src/data/
+src/data2/
+src/data3/
 .DS_Store
 
 # Byte-compiled / optimized / DLL files

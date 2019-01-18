@@ -3,9 +3,12 @@
 import os
 import sys
 import json
+import time
 import argparse
+import functools
 import collections
 
+from bs4 import BeautifulSoup
 from bs4.element import Comment
 from nltk.stem.snowball import SnowballStemmer
 
@@ -13,6 +16,18 @@ from nltk.stem.snowball import SnowballStemmer
 stemmer = SnowballStemmer('russian')
 
 
+
+def worktime(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        print('[WORKTIME] {} by {}s'.format(func.__name__, time.time() - start))
+        return result
+    return wrapper
+
+
+@worktime
 def parse_html_page(html):
     def tag_visible(element):
         if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
@@ -38,21 +53,35 @@ def parse_html_page(html):
     return title, headers, text, links
 
 
+@worktime
 def bag_of_words(text):
     return [x.strip() for x in text.replace('\n', ' ').split(' ') if x.strip()]
 
 
+@worktime
 def steming(bag_of_words_data):
     return [stemmer.stem(x) for x in bag_of_words_data]
 
 
+@worktime
 def count_words(words):
-    words_count = collections.defaultdict(int)
-    for uniq_word in set(words):
-        words_count[uniq_word] = words.count(uniq_word)
+    def is_in_dict(dct, key):
+        try:
+            _ = dct[key]
+        except KeyError:
+            return False
+        return True
+
+    print('    words: {}'.format(len(words)))
+    words_count = {}
+    for word in words:
+        if not is_in_dict(words_count, word):
+            words_count[word] = 0
+        words_count[word] += 1
     return words_count
 
 
+@worktime
 def update_index(words_count, index, url, k):
     for word, count in words_count.items():
         if word not in index:
@@ -64,12 +93,25 @@ def indexer(downloaded_path, output_path):
     with open(downloaded_path, 'r') as rfile:
         downloaded = json.load(rfile)
 
+    with open(os.path.join(output_path, 'index.json')) as rfile:
+        try:
+            old_index = json.load(rfile)
+            visited_links = set()
+            for _, data in old_index.items():
+                for link in data:
+                    visited_links.add(link)
+        except Exception:
+            visited_links = set()
+
     index = {}
-    for url, data in downloaded.items():
+    for i, (url, data) in enumerate(downloaded.items()):
+        if url in visited_links:
+            continue
+
         with open(data['path']) as rfile:
             page = json.load(rfile)
 
-        text = parse_html_page(page['html'])
+        _, _, text, _ = parse_html_page(page['html'])
         words = bag_of_words(text)
         words = steming(words)
 
@@ -89,9 +131,24 @@ def indexer(downloaded_path, output_path):
         update_index(header_words_count, index, url, 100)
         update_index(title_words_count, index, url, 200)
 
+        print('Processed {} ({}/{})'.format(url, i, len(downloaded)))
+
+        if i and i % 10 == 0 and output_path:
+            try:
+                json_data = json.dumps(index, indent=4)
+                with open(os.path.join(output_path, 'index.json'), 'w') as wfile:
+                    wfile.write(json_data)
+                with open(os.path.join(output_path, 'index2.json'), 'w') as wfile:
+                    wfile.write(json_data)
+            except Exception as e:
+                print('[ERROR] {}: {}'.format(type(e), e))
+
+            print('Flushed {} urls to index'.format(i))
+
     if output_path is not None:
+        json_data = json.dumps(index, indent=4)
         with open(os.path.join(output_path, 'index.json'), 'w') as wfile:
-            wfile.write(json.dumps(index, indent=4))
+            wfile.write(json_data)
 
     return index
 

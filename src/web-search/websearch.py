@@ -111,6 +111,11 @@ def search():
     return flask.render_template('search.html', links=prepared, query=q)
 
 
+@APP.route('/about')
+def about():
+    return flask.render_template('about.html')
+
+
 def websearch(port, data_path):
     Index.load(data_path, 'index.json')
     APP.run(host='::', port=port, debug=True)
