@@ -10,6 +10,7 @@ import multiprocessing
 import flask
 
 from flask import Flask
+from bs4 import BeautifulSoup
 from bs4.element import Comment
 from nltk.stem.snowball import SnowballStemmer
 
@@ -67,7 +68,7 @@ class Index(object):
     def snippet_by_html(html, query):
         text_from_page = Index.text_from_tags(html, ['style', 'script', 'head', 'title', 'meta', '[document]', 'a', 'button'])
 
-        snippet = []
+        snippets = []
         for seq in text_from_page.split('. '):
             if not seq:
                 continue
@@ -86,7 +87,7 @@ class Index(object):
         hash_name = hashlib.md5(link.encode('utf-8')).hexdigest()
         with open(os.path.join(Index.data_path, '{}.json'.format(hash_name))) as rfile:
             data = json.load(rfile)
-        snippet = Index.snippets.append(data['html'], query)
+        snippet = Index.snippet_by_html(data['html'], query)
 
         return str(data['title']), str(data['url']), snippet
 
